@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Murder at Midnight</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
+  :root{--cream:#f5f0e8;--dark:#1a1208;--blood:#8b1a1a;--gold:#c9a84c;--gold-light:#e8c878;--muted:#6b5a3e;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--dark);color:var(--cream);font-family:'Crimson Text',serif;min-height:100vh;overflow-x:hidden;
+    background-image:radial-gradient(ellipse at 20% 50%,rgba(139,26,26,0.08) 0%,transparent 50%),radial-gradient(ellipse at 80% 20%,rgba(201,168,76,0.05) 0%,transparent 40%);}
+  #app{max-width:900px;margin:0 auto;padding:20px;}
+  .screen{display:none;animation:fadeIn .6s ease}.screen.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .masthead{text-align:center;padding:40px 20px 20px}
+  .masthead::before,.masthead::after{content:'';display:block;width:60%;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);margin:0 auto}
+  .masthead::before{margin-bottom:20px}.masthead::after{margin-top:20px}
+  .game-title{font-family:'Playfair Display',serif;font-size:clamp(2rem,6vw,3.8rem);font-weight:900;letter-spacing:.05em;line-height:1.1;text-shadow:0 0 40px rgba(201,168,76,.3)}
+  .game-subtitle{font-family:'Playfair Display',serif;font-style:italic;color:var(--gold);margin-top:6px;letter-spacing:.2em;text-transform:uppercase;font-size:.85rem}
+  .dagger{color:var(--blood);font-size:1.4rem;display:inline-block;transform:rotate(45deg);margin:0 8px}
+  .btn{font-family:'Playfair Display',serif;font-weight:700;font-size:1rem;letter-spacing:.1em;text-transform:uppercase;padding:14px 32px;border:none;cursor:pointer;transition:all .25s}
+  .btn-primary{background:var(--blood);color:var(--cream);border:2px solid rgba(201,168,76,.4)}
+  .btn-primary:hover{background:#a52020;transform:translateY(-2px);box-shadow:0 8px 25px rgba(139,26,26,.5)}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid rgba(107,90,62,.4);font-size:.8rem;padding:8px 18px}
+  .btn-ghost:hover{color:var(--cream);border-color:var(--cream)}
+  .btn-pass{background:transparent;color:var(--muted);border:1px solid rgba(107,90,62,.3);font-size:.85rem;padding:10px 24px;font-family:'Playfair Display',serif;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+  .btn-pass:hover{color:var(--cream);border-color:var(--cream)}
+  .btn-lb{background:transparent;color:var(--gold);border:1px solid rgba(201,168,76,.3);font-family:'Playfair Display',serif;font-size:.82rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:10px 20px;cursor:pointer;transition:all .2s;margin-top:16px}
+  .btn-lb:hover{background:rgba(201,168,76,.1);border-color:var(--gold)}
+  .btn-link{background:none;border:none;color:var(--muted);font-family:'Crimson Text',serif;font-size:.85rem;cursor:pointer;text-decoration:underline;padding:4px 8px;transition:color .2s}
+  .btn-link:hover{color:var(--blood)}
+  .setup-card{background:rgba(245,240,232,.04);border:1px solid rgba(201,168,76,.2);padding:40px;margin:30px 0}
+  .setup-card h2{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--gold);margin-bottom:30px;text-align:center;font-style:italic}
+  .player-list{list-style:none;margin-bottom:24px}
+  .player-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(201,168,76,.1)}
+  .player-num{font-family:'Playfair Display',serif;color:var(--gold);font-size:.9rem;width:30px}
+  .player-input{flex:1;background:rgba(245,240,232,.06);border:1px solid rgba(201,168,76,.25);color:var(--cream);font-family:'Crimson Text',serif;font-size:1.1rem;padding:8px 14px;outline:none;transition:border-color .2s}
+  .player-input:focus{border-color:var(--gold)}
+  .player-input::placeholder{color:var(--muted);font-style:italic}
+  .remove-player{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.2rem;padding:4px 8px;transition:color .2s}
+  .remove-player:hover{color:var(--blood)}
+  .add-player-btn{background:none;border:1px dashed rgba(201,168,76,.3);color:var(--muted);font-family:'Crimson Text',serif;font-size:1rem;padding:8px 16px;cursor:pointer;width:100%;margin-top:8px;transition:all .2s}
+  .add-player-btn:hover{color:var(--gold);border-color:var(--gold)}
+  .mode-select,.diff-select{display:flex;gap:12px;margin-bottom:30px;flex-wrap:wrap}
+  .mode-opt,.diff-opt{flex:1;min-width:140px;padding:16px;border:1.5px solid rgba(201,168,76,.2);cursor:pointer;text-align:center;transition:all .2s;background:transparent}
+  .mode-opt:hover,.diff-opt:hover{border-color:var(--gold);background:rgba(201,168,76,.05)}
+  .mode-opt.selected,.diff-opt.selected{border-color:var(--blood);background:rgba(139,26,26,.15)}
+  .mode-opt h3,.diff-opt h3{font-family:'Playfair Display',serif;font-size:1rem;color:var(--cream);margin-bottom:4px}
+  .mode-opt p,.diff-opt p{font-size:.82rem;color:var(--muted);line-height:1.4;font-style:italic}
+  .mode-opt.selected h3,.diff-opt.selected h3{color:var(--gold-light)}
+  .section-header{font-family:'Playfair Display',serif;font-size:.75rem;letter-spacing:.35em;text-transform:uppercase;color:var(--gold);margin:30px 0 14px;display:flex;align-items:center;gap:12px}
+  .section-header::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(201,168,76,.3),transparent)}
+  .loading-screen{text-align:center;padding:80px 20px}
+  .loading-orb{width:80px;height:80px;border:2px solid rgba(201,168,76,.2);border-top-color:var(--blood);border-radius:50%;animation:spin 1.2s linear infinite;margin:0 auto 30px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{font-family:'Playfair Display',serif;font-style:italic;color:var(--gold);font-size:1.2rem;animation:pulse 1.5s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+  .crime-scene-header{background:linear-gradient(135deg,rgba(139,26,26,.2),rgba(26,18,8,.8));border:1px solid rgba(139,26,26,.4);padding:30px;margin:20px 0}
+  .crime-scene-header::before{content:'✦ CRIME SCENE REPORT ✦';display:block;font-size:.7rem;letter-spacing:.3em;color:var(--blood);margin-bottom:16px;font-family:'Playfair Display',serif}
+  .victim-line{font-family:'Playfair Display',serif;font-size:clamp(1.4rem,3.5vw,2rem);font-weight:700;line-height:1.3}
+  .victim-line em{color:var(--gold-light);font-style:italic}
+  .scene-detail{margin-top:14px;color:rgba(245,240,232,.75);font-size:1.05rem;line-height:1.7;font-style:italic}
+  .suspects-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:10px}
+  .suspect-card{background:rgba(245,240,232,.04);border:1px solid rgba(201,168,76,.15);padding:16px;cursor:pointer;transition:all .2s;position:relative}
+  .suspect-card:hover{border-color:rgba(201,168,76,.5);background:rgba(245,240,232,.07)}
+  .suspect-card.selected{border-color:var(--blood);background:rgba(139,26,26,.2)}
+  .suspect-card.selected::after{content:'✓';position:absolute;top:10px;right:12px;color:var(--blood);font-size:1rem}
+  .suspect-name{font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:4px}
+  .suspect-role{font-size:.82rem;color:var(--gold);font-style:italic;margin-bottom:6px}
+  .suspect-desc{font-size:.85rem;color:var(--muted);line-height:1.5}
+  .clues-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+  .clue-card{background:rgba(245,240,232,.03);border:1px solid rgba(201,168,76,.12);padding:18px;transition:all .25s}
+  .clue-card.revealed{border-color:rgba(201,168,76,.35);background:rgba(245,240,232,.06)}
+  .clue-card.locked{cursor:pointer;opacity:.6}
+  .clue-card.locked:hover{opacity:.85;border-color:rgba(201,168,76,.3)}
+  .clue-number{font-family:'Playfair Display',serif;font-size:.7rem;letter-spacing:.25em;color:var(--gold);margin-bottom:8px}
+  .clue-text{font-size:.95rem;line-height:1.65;color:rgba(245,240,232,.85)}
+  .clue-lock{text-align:center;color:var(--muted);font-style:italic;font-size:.9rem}
+  .clue-lock-icon{font-size:1.4rem;display:block;margin-bottom:6px}
+  .clue-gate{text-align:center;margin:14px 0;font-family:'Playfair Display',serif;font-style:italic;font-size:.88rem;color:var(--muted);padding:10px;border:1px dashed rgba(201,168,76,.2)}
+  .clue-gate strong{color:var(--gold)}
+  .accusation-box{background:rgba(139,26,26,.1);border:1px solid rgba(139,26,26,.35);padding:28px;margin:30px 0 20px;text-align:center}
+  .accusation-box h3{font-family:'Playfair Display',serif;font-size:1.3rem;margin-bottom:8px}
+  .accusation-box p{font-size:.92rem;color:var(--muted);font-style:italic;margin-bottom:20px}
+  .player-turns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:20px}
+  .turn-chip{padding:6px 16px;border:1px solid rgba(201,168,76,.2);font-size:.82rem;color:var(--muted);font-family:'Playfair Display',serif}
+  .turn-chip.active{border-color:var(--gold);color:var(--gold-light);background:rgba(201,168,76,.1)}
+  .turn-chip.accused{border-color:var(--blood);color:var(--blood);text-decoration:line-through}
+  .turn-chip.correct{border-color:#4caf50;color:#81c784}
+  .turn-indicator{background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.25);padding:10px 20px;text-align:center;margin:16px 0;font-family:'Playfair Display',serif;font-size:.95rem;color:var(--gold)}
+  .room-code-display{background:rgba(201,168,76,.08);border:2px solid var(--gold);padding:20px;text-align:center;margin:20px 0}
+  .room-code-display .code{font-family:'Playfair Display',serif;font-size:2.5rem;font-weight:900;color:var(--gold-light);letter-spacing:.3em;margin:10px 0}
+  .room-code-display p{color:var(--muted);font-style:italic;font-size:.9rem}
+  .join-input{background:rgba(245,240,232,.06);border:2px solid rgba(201,168,76,.3);color:var(--gold-light);font-family:'Playfair Display',serif;font-size:2rem;font-weight:900;padding:12px;text-align:center;letter-spacing:.3em;text-transform:uppercase;width:200px;outline:none}
+  .join-input:focus{border-color:var(--gold)}
+  .join-input::placeholder{color:var(--muted);font-size:1rem;letter-spacing:.1em;font-weight:400}
+  .result-card{border:1px solid rgba(201,168,76,.3);padding:40px;margin:20px 0;text-align:center;background:rgba(245,240,232,.03)}
+  .result-card.correct-result{border-color:rgba(139,26,26,.6);background:rgba(139,26,26,.1)}
+  .result-verdict{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,4vw,2.5rem);font-weight:900;color:var(--gold-light);margin-bottom:10px;line-height:1.2}
+  .result-murderer{font-family:'Playfair Display',serif;font-size:1.2rem;margin-bottom:8px}
+  .result-murderer em{color:var(--blood);font-style:italic}
+  .result-motive{font-size:1rem;color:rgba(245,240,232,.7);line-height:1.7;margin:20px auto;max-width:600px;font-style:italic}
+  .score-board{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin:24px 0}
+  .score-chip{padding:12px 20px;border:1px solid rgba(201,168,76,.25);min-width:120px;text-align:center}
+  .score-name{font-size:.8rem;color:var(--muted);margin-bottom:4px;letter-spacing:.1em}
+  .score-val{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gold);font-weight:700}
+  .score-val.winner{color:var(--gold-light)}
+  .notes-toggle{position:fixed;bottom:20px;right:20px;background:var(--blood);color:var(--cream);border:none;width:52px;height:52px;border-radius:50%;font-size:1.3rem;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.5);z-index:100;transition:transform .2s}
+  .notes-toggle:hover{transform:scale(1.1)}
+  .notes-panel{position:fixed;bottom:82px;right:20px;width:300px;background:#1e1408;border:1px solid rgba(201,168,76,.3);padding:16px;display:none;z-index:99;box-shadow:0 8px 30px rgba(0,0,0,.6)}
+  .notes-panel.open{display:block}
+  .notes-panel h4{font-family:'Playfair Display',serif;font-size:.85rem;color:var(--gold);letter-spacing:.2em;text-transform:uppercase;margin-bottom:10px}
+  .notes-area{width:100%;background:rgba(245,240,232,.05);border:1px solid rgba(201,168,76,.15);color:var(--cream);font-family:'Crimson Text',serif;font-size:.95rem;padding:10px;resize:vertical;min-height:120px;outline:none}
+  .lb-table{width:100%;border-collapse:collapse;margin:20px 0}
+  .lb-table th{font-family:'Playfair Display',serif;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);padding:10px 12px;text-align:left;border-bottom:1px solid rgba(201,168,76,.3)}
+  .lb-table th:not(:first-child){text-align:center}
+  .lb-table td{padding:12px;border-bottom:1px solid rgba(201,168,76,.08);font-size:.95rem}
+  .lb-table td:not(:first-child){text-align:center}
+  .lb-rank{font-family:'Playfair Display',serif;color:var(--gold);font-weight:700;width:36px}
+  .lb-rank.gold{color:#ffd700}.lb-rank.silver{color:#c0c0c0}.lb-rank.bronze{color:#cd7f32}
+  .lb-name{font-family:'Playfair Display',serif;font-weight:700}
+  .lb-stat{color:rgba(245,240,232,.7)}
+  .lb-wins{color:var(--gold-light);font-weight:600}
+  .lb-streak{color:var(--blood);font-weight:600}
+  .lb-empty{text-align:center;color:var(--muted);font-style:italic;padding:40px 20px;font-size:1.05rem}
+  .lb-header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .lb-header-row h2{margin-bottom:0}
+  .error-msg{color:var(--blood);font-style:italic;font-size:.9rem;text-align:center;margin:10px 0}
+  .center{text-align:center}
+  .btn-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .or-divider{text-align:center;color:var(--muted);font-family:'Playfair Display',serif;font-style:italic;margin:20px 0;font-size:.9rem}
+
+  /* TABLET */
+  @media(max-width:768px){
+    #app{padding:14px}.setup-card{padding:28px 22px;margin:20px 0}
+    .suspects-grid,.clues-container{grid-template-columns:repeat(2,1fr);gap:12px}
+    .crime-scene-header,.result-card,.accusation-box{padding:22px}
+  }
+  /* PHONE */
+  @media(max-width:480px){
+    #app{padding:10px}.masthead{padding:24px 12px 14px}
+    .masthead::before,.masthead::after{width:80%}
+    .game-subtitle{font-size:.7rem;letter-spacing:.15em}.dagger{margin:0 4px;font-size:1.1rem}
+    .setup-card{padding:20px 16px;margin:16px 0}.setup-card h2{font-size:1.25rem;margin-bottom:20px}
+    .mode-select,.diff-select{flex-direction:column;gap:10px}
+    .mode-opt,.diff-opt{min-width:unset;padding:14px}
+    .player-input{font-size:1rem;padding:10px 12px}
+    .btn{width:100%;padding:16px 24px;font-size:.95rem}
+    .btn-pass,.btn-lb{width:100%;padding:14px 24px}
+    .btn-row{flex-direction:column;gap:10px}
+    .btn-ghost{width:100%;padding:14px 18px;font-size:.85rem}
+    .crime-scene-header{padding:18px 14px;margin:14px 0}
+    .suspects-grid,.clues-container{grid-template-columns:1fr;gap:10px}
+    .suspect-card{padding:18px;min-height:44px}.suspect-name{font-size:1.1rem}
+    .clue-card{padding:20px 16px;min-height:60px}.clue-text{font-size:1rem}
+    .accusation-box{padding:20px 14px;margin:20px 0 16px}
+    .result-card{padding:24px 16px}
+    .score-chip{min-width:100px;padding:10px 14px}.score-val{font-size:1.2rem}
+    .notes-toggle{bottom:14px;right:14px;width:48px;height:48px}
+    .notes-panel{left:10px;right:10px;bottom:72px;width:auto}
+    .section-header{margin:22px 0 10px;font-size:.7rem}
+    .lb-table th{font-size:.6rem;padding:8px 6px}.lb-table td{padding:10px 6px;font-size:.85rem}
+    .join-input{font-size:1.6rem;width:160px}
+    .room-code-display .code{font-size:2rem}
+  }
+  @media(max-width:360px){
+    .game-title{font-size:1.8rem}.setup-card{padding:16px 12px}
+    .crime-scene-header,.result-card,.accusation-box{padding:14px 12px}
+  }
+  @supports(padding-bottom:env(safe-area-inset-bottom)){
+    .notes-toggle{bottom:calc(14px + env(safe-area-inset-bottom))}
+    .notes-panel{bottom:calc(72px + env(safe-area-inset-bottom))}
+    #app{padding-bottom:env(safe-area-inset-bottom)}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="masthead">
+    <div class="game-title"><span class="dagger">✦</span> Murder at Midnight <span class="dagger">✦</span></div>
+    <div class="game-subtitle">A Mystery of Deduction &amp; Deception</div>
+  </div>
+
+  <!-- SETUP -->
+  <div id="screen-setup" class="screen active">
+    <div class="setup-card">
+      <h2>Begin Your Investigation</h2>
+
+      <div class="section-header">Players</div>
+      <ul class="player-list" id="player-list">
+        <li class="player-item"><span class="player-num">I.</span><input class="player-input" placeholder="Player name…"/></li>
+        <li class="player-item"><span class="player-num">II.</span><input class="player-input" placeholder="Player name…"/></li>
+      </ul>
+      <button class="add-player-btn" onclick="addPlayer()">+ Add another investigator</button>
+
+      <div class="section-header" style="margin-top:28px">Difficulty</div>
+      <div class="diff-select">
+        <div class="diff-opt" onclick="selectDiff(this,'elementary')"><h3>&#128270; Elementary</h3><p>4 suspects · clearer clues · reveal 3 to accuse</p></div>
+        <div class="diff-opt selected" onclick="selectDiff(this,'afoot')"><h3>&#128065; The Game is Afoot</h3><p>5 suspects · ambiguous clues · reveal 4 to accuse</p></div>
+        <div class="diff-opt" onclick="selectDiff(this,'diabolical')"><h3>&#128128; Diabolical</h3><p>6 suspects · red herrings · reveal 5 to accuse</p></div>
+      </div>
+
+      <div class="section-header">Game Mode</div>
+      <div class="mode-select">
+        <div class="mode-opt selected" onclick="selectMode(this,'cooperative')"><h3>&#9878; Cooperative</h3><p>Work together to name the killer</p></div>
+        <div class="mode-opt" onclick="selectMode(this,'competitive')"><h3>&#128481; Competitive</h3><p>Race to accuse first — one winner</p></div>
+        <div class="mode-opt" onclick="selectMode(this,'deceptive')"><h3>&#127917; One Traitor</h3><p>One player secretly knows and misdirects</p></div>
+      </div>
+
+      <div id="setup-error" class="error-msg" style="display:none"></div>
+      <div class="center">
+        <button class="btn btn-primary" onclick="startGame('solo')">Solo Device — Start</button>
+        <div class="or-divider">— or play remotely —</div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="startGame('create')" style="flex:1">Create Room</button>
+          <button class="btn btn-ghost" onclick="showJoin()" style="flex:1">Join Room</button>
+        </div>
+        <br><button class="btn-lb" onclick="showLeaderboard('setup')">&#127942; Hall of Detectives</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOIN -->
+  <div id="screen-join" class="screen">
+    <div class="setup-card" style="text-align:center">
+      <h2>Enter the Case File Code</h2>
+      <p style="color:var(--muted);font-style:italic;margin-bottom:24px">Get the 4-letter code from whoever created the game</p>
+      <input class="join-input" id="join-code-input" maxlength="4" placeholder="CODE" autocomplete="off"/>
+      <div id="join-error" class="error-msg" style="display:none"></div>
+      <div style="margin-top:24px">
+        <button class="btn btn-primary" onclick="joinRoom()">Open the Case</button>
+      </div>
+      <div style="margin-top:16px"><button class="btn-link" onclick="showScreen('setup')">Back</button></div>
+    </div>
+  </div>
+
+  <!-- ROOM CREATED -->
+  <div id="screen-room" class="screen">
+    <div class="setup-card" style="text-align:center">
+      <h2>Case File Created</h2>
+      <div class="room-code-display">
+        <p>Share this code with your fellow investigators</p>
+        <div class="code" id="room-code-display"></div>
+        <p>They tap <strong>Join Room</strong> and enter this code</p>
+      </div>
+      <div style="margin-top:24px"><button class="btn btn-primary" onclick="enterGameFromRoom()">Enter the Crime Scene</button></div>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="screen-loading" class="screen">
+    <div class="loading-screen">
+      <div class="loading-orb"></div>
+      <div class="loading-text" id="loading-text">The detective arrives at the scene…</div>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="screen-game" class="screen">
+    <div id="crime-scene-header" class="crime-scene-header"></div>
+    <div id="turn-indicator" class="turn-indicator" style="display:none"></div>
+    <div class="section-header">The Suspects</div>
+    <div id="suspects-grid" class="suspects-grid"></div>
+    <div class="section-header" style="margin-top:28px">Evidence &amp; Clues</div>
+    <div id="clues-container" class="clues-container"></div>
+    <div id="clue-gate" class="clue-gate" style="display:none"></div>
+    <div id="accusation-box" class="accusation-box">
+      <h3>Make Your Accusation</h3>
+      <p id="accusation-hint">Select a suspect above, then press accuse</p>
+      <div class="player-turns" id="player-turns-display"></div>
+      <div id="accuse-error" class="error-msg" style="display:none"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="accuse()" id="accuse-btn" disabled>Accuse</button>
+        <button class="btn-pass" onclick="passTurn()" id="pass-btn" style="display:none">Pass</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRAITOR REVEAL -->
+  <div id="screen-traitor" class="screen">
+    <div class="setup-card" style="text-align:center">
+      <h2>&#127917; The Traitor Is Chosen</h2>
+      <p style="color:var(--muted);font-style:italic;margin-bottom:20px">Pass the device to the chosen traitor. Only they should see this screen.</p>
+      <div id="traitor-reveal" style="display:none">
+        <p style="font-size:1.1rem;margin-bottom:8px">You are the traitor, <strong id="traitor-name" style="color:var(--gold-light)"></strong>.</p>
+        <p style="font-size:1.3rem;margin:16px 0">The murderer is: <strong id="traitor-murderer" style="color:var(--blood);font-family:'Playfair Display',serif;font-size:1.5rem"></strong></p>
+        <p style="color:var(--muted);font-style:italic;margin-bottom:24px">Misdirect the others. Do not let them find the killer.</p>
+      </div>
+      <div id="traitor-hidden" style="margin:30px 0">
+        <p style="color:var(--gold);font-size:1.1rem;margin-bottom:16px">Tap below when only the traitor can see the screen.</p>
+        <button class="btn btn-primary" onclick="showTraitor()">Reveal the Killer</button>
+      </div>
+      <button class="btn btn-primary" id="traitor-continue" onclick="continueFromTraitor()" style="display:none">I've memorised it — start the game</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="screen-result" class="screen">
+    <div id="result-card" class="result-card">
+      <div id="result-verdict" class="result-verdict"></div>
+      <div id="result-murderer" class="result-murderer"></div>
+      <div id="result-motive" class="result-motive"></div>
+      <div id="score-board" class="score-board"></div>
+    </div>
+    <div class="center" style="margin-top:20px">
+      <button class="btn btn-primary" onclick="playAgain()" style="margin-right:12px">New Mystery</button>
+      <button class="btn btn-ghost" onclick="backToSetup()">Change Players</button>
+      <br><button class="btn-lb" onclick="showLeaderboard('result')">&#127942; Hall of Detectives</button>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div id="screen-leaderboard" class="screen">
+    <div class="setup-card">
+      <div class="lb-header-row">
+        <h2 style="font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--gold);font-style:italic">&#127942; Hall of Detectives</h2>
+        <button class="btn-link" onclick="confirmResetLB()">Reset</button>
+      </div>
+      <div id="lb-content"></div>
+      <div class="center" style="margin-top:24px"><button class="btn btn-ghost" onclick="showScreen(lbReturn)" style="font-size:.85rem;padding:10px 20px">Back</button></div>
+    </div>
+  </div>
+</div>
+
+<button class="notes-toggle" id="notes-toggle" onclick="toggleNotes()" style="display:none">&#128221;</button>
+<div class="notes-panel" id="notes-panel">
+  <h4>Detective's Notes</h4>
+  <textarea class="notes-area" id="notes-area" placeholder="Jot your theories here…"></textarea>
+</div>
+
+<script>
+// ===== STATE =====
+let S={players:[],mode:'cooperative',difficulty:'afoot',scenario:null,selectedSuspect:null,
+  revealedClues:[],playerAccusations:{},currentTurnIndex:0,scores:{},gameOver:false,traitorIndex:-1,roomCode:null};
+const ROMAN=['I','II','III','IV','V','VI'];
+const DIFF_CLUE_REQ={elementary:3,afoot:4,diabolical:5};
+let lbReturn='setup';
+
+// ===== SETUP =====
+function addPlayer(){const l=document.getElementById('player-list');if(l.children.length>=6)return;const li=document.createElement('li');li.className='player-item';const i=l.children.length;li.innerHTML=`<span class="player-num">${ROMAN[i]}.</span><input class="player-input" placeholder="Player name…"/><button class="remove-player" onclick="removePlayer(this)" title="Remove">×</button>`;l.appendChild(li);}
+function removePlayer(b){const l=document.getElementById('player-list');if(l.children.length<=2)return;b.closest('.player-item').remove();Array.from(l.children).forEach((li,i)=>{li.querySelector('.player-num').textContent=ROMAN[i]+'.';});}
+function selectMode(el,m){document.querySelectorAll('.mode-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');S.mode=m;}
+function selectDiff(el,d){document.querySelectorAll('.diff-opt').forEach(o=>o.classList.remove('selected'));el.classList.add('selected');S.difficulty=d;}
+function getPlayerNames(){return Array.from(document.querySelectorAll('.player-input')).map(i=>i.value.trim()).filter(v=>v.length>0);}
+
+// ===== LOADING =====
+const loadPhrases=['The detective arrives at the scene…','A body has been discovered…','Interviewing witnesses…','Dusting for fingerprints…','The game is afoot…'];
+let loadInt;
+function showLoading(){showScreen('loading');let i=0;const el=document.getElementById('loading-text');el.textContent=loadPhrases[0];loadInt=setInterval(()=>{i=(i+1)%loadPhrases.length;el.textContent=loadPhrases[i];},1800);}
+function hideLoading(){clearInterval(loadInt);}
+
+// ===== START GAME =====
+async function startGame(type){
+  const names=getPlayerNames();const err=document.getElementById('setup-error');
+  if(names.length<1){err.style.display='block';err.textContent='Enter at least one name.';return;}
+  if(new Set(names).size!==names.length){err.style.display='block';err.textContent='Each player needs a unique name.';return;}
+  err.style.display='none';
+  S.players=names;names.forEach(n=>{if(S.scores[n]===undefined)S.scores[n]=0;});
+  S.playerAccusations={};S.currentTurnIndex=0;S.gameOver=false;S.selectedSuspect=null;
+  S.revealedClues=[0];S.roomCode=null;
+
+  showLoading();
+  try{
+    const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:S.mode,difficulty:S.difficulty})});
+    if(!res.ok)throw new Error('API error');
+    S.scenario=await res.json();
+  }catch(e){S.scenario=getFallback();}
+  hideLoading();
+
+  if(type==='create'){
+    // Create room so others can join
+    try{
+      const r=await fetch('/api/room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',scenario:S.scenario,difficulty:S.difficulty,mode:S.mode})});
+      if(r.ok){const d=await r.json();S.roomCode=d.code;document.getElementById('room-code-display').textContent=d.code;showScreen('room');return;}
+    }catch(e){}
+    // If room creation fails, just continue
+  }
+  enterGame();
+}
+
+// ===== JOIN =====
+function showJoin(){showScreen('join');document.getElementById('join-code-input').value='';document.getElementById('join-error').style.display='none';}
+async function joinRoom(){
+  const code=document.getElementById('join-code-input').value.trim().toUpperCase();
+  const err=document.getElementById('join-error');
+  if(code.length!==4){err.style.display='block';err.textContent='Enter a 4-letter code.';return;}
+  err.style.display='none';showLoading();
+  try{
+    const r=await fetch('/api/room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'join',code})});
+    if(!r.ok){hideLoading();err.style.display='block';err.textContent='Room not found. Check the code and try again.';showScreen('join');return;}
+    const d=await r.json();S.scenario=d.scenario;S.difficulty=d.difficulty||'afoot';S.mode=d.mode||'cooperative';S.roomCode=code;
+    // Get player names from setup
+    const names=getPlayerNames();
+    if(names.length<1){hideLoading();showScreen('setup');return;}
+    S.players=names;names.forEach(n=>{if(S.scores[n]===undefined)S.scores[n]=0;});
+    S.playerAccusations={};S.currentTurnIndex=0;S.gameOver=false;S.selectedSuspect=null;S.revealedClues=[0];
+  }catch(e){hideLoading();err.style.display='block';err.textContent='Connection error. Try again.';showScreen('join');return;}
+  hideLoading();enterGame();
+}
+function enterGameFromRoom(){enterGame();}
+
+function enterGame(){
+  if(S.mode==='deceptive'&&S.players.length>1){
+    S.traitorIndex=Math.floor(Math.random()*S.players.length);
+    document.getElementById('traitor-name').textContent=S.players[S.traitorIndex];
+    document.getElementById('traitor-murderer').textContent=S.scenario.murderer;
+    document.getElementById('traitor-reveal').style.display='none';
+    document.getElementById('traitor-hidden').style.display='block';
+    document.getElementById('traitor-continue').style.display='none';
+    showScreen('traitor');
+  }else{renderGame();}
+}
+function showTraitor(){document.getElementById('traitor-reveal').style.display='block';document.getElementById('traitor-hidden').style.display='none';document.getElementById('traitor-continue').style.display='inline-block';}
+function continueFromTraitor(){renderGame();}
+
+// ===== RENDER GAME =====
+function renderGame(){
+  const s=S.scenario;showScreen('game');
+  document.getElementById('notes-toggle').style.display='block';
+  document.getElementById('crime-scene-header').innerHTML=`<div class="victim-line">Case: <em>${esc(s.title)}</em></div><div class="victim-line" style="font-size:1rem;margin-top:6px;color:rgba(245,240,232,.7)">Victim: ${esc(s.victim)}</div><div class="scene-detail">${esc(s.setting)}<br><br>${esc(s.discovery)}</div>`;
+  const ti=document.getElementById('turn-indicator');
+  if(S.mode!=='cooperative'&&S.players.length>1){ti.style.display='block';updateTurnIndicator();}else{ti.style.display='none';}
+  document.getElementById('suspects-grid').innerHTML=s.suspects.map(sus=>`<div class="suspect-card" onclick="selectSuspect(this,'${esc(sus.name)}')"><div class="suspect-name">${esc(sus.name)}</div><div class="suspect-role">${esc(sus.role)}</div><div class="suspect-desc">${esc(sus.description)}</div></div>`).join('');
+  document.getElementById('pass-btn').style.display=(S.mode!=='cooperative'&&S.players.length>1)?'inline-block':'none';
+  renderClues();renderAccusationBox();updateClueGate();
+}
+function renderClues(){
+  const s=S.scenario;
+  document.getElementById('clues-container').innerHTML=s.clues.map((clue,i)=>{
+    const rev=S.revealedClues.includes(i);
+    return rev?`<div class="clue-card revealed"><div class="clue-number">Clue ${ROMAN[i]}</div><div class="clue-text">${esc(clue)}</div></div>`
+    :`<div class="clue-card locked" onclick="revealClue(${i})"><div class="clue-number">Clue ${ROMAN[i]}</div><div class="clue-lock"><span class="clue-lock-icon">&#128274;</span>Tap to reveal</div></div>`;
+  }).join('');
+}
+function revealClue(i){if(!S.revealedClues.includes(i)){S.revealedClues.push(i);renderClues();updateClueGate();}}
+function updateClueGate(){
+  const req=DIFF_CLUE_REQ[S.difficulty]||4;const have=S.revealedClues.length;const gate=document.getElementById('clue-gate');const btn=document.getElementById('accuse-btn');
+  if(have<req&&!S.gameOver){
+    gate.style.display='block';
+    gate.innerHTML=`Reveal <strong>${req-have}</strong> more clue${req-have>1?'s':''} before you may accuse — a thorough detective examines the evidence.`;
+    btn.disabled=true;
+  }else{gate.style.display='none';btn.disabled=!S.selectedSuspect;}
+}
+function renderAccusationBox(){
+  const box=document.getElementById('accusation-box');if(S.gameOver){box.style.display='none';return;}box.style.display='block';
+  const hint=document.getElementById('accusation-hint');const turns=document.getElementById('player-turns-display');
+  if(S.mode==='cooperative'||S.players.length<=1){hint.textContent='Select your prime suspect and make your accusation.';turns.innerHTML='';}
+  else{
+    const cur=S.players[S.currentTurnIndex];hint.textContent=`${cur}'s turn — accuse a suspect or pass`;
+    turns.innerHTML=S.players.map((p,i)=>{let c='turn-chip';if(i===S.currentTurnIndex)c+=' active';if(S.playerAccusations[p])c+=S.playerAccusations[p]===S.scenario.murderer?' correct':' accused';const label=S.mode==='deceptive'&&i===S.traitorIndex?p+' &#127917;':p;return`<div class="${c}">${label}</div>`;}).join('');
+  }
+}
+function updateTurnIndicator(){document.getElementById('turn-indicator').innerHTML=`&#128270; It is ${esc(S.players[S.currentTurnIndex])}'s turn`;}
+function selectSuspect(el,name){
+  document.querySelectorAll('.suspect-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');S.selectedSuspect=name;
+  document.getElementById('accuse-error').style.display='none';
+  const req=DIFF_CLUE_REQ[S.difficulty]||4;
+  document.getElementById('accuse-btn').disabled=S.revealedClues.length<req;
+}
+function passTurn(){if(S.mode==='cooperative'||S.gameOver||S.players.length<=1)return;advanceTurn();}
+function accuse(){
+  if(!S.selectedSuspect){const e=document.getElementById('accuse-error');e.style.display='block';e.textContent='Select a suspect first.';return;}
+  const accused=S.selectedSuspect,murderer=S.scenario.murderer;
+  if(S.mode==='cooperative'||S.players.length<=1){
+    S.gameOver=true;const correct=accused===murderer;
+    if(correct)S.players.forEach(p=>S.scores[p]+=1);
+    showResult(correct,accused,correct?null:null, correct?S.players:[]);
+  }else{
+    const cur=S.players[S.currentTurnIndex];S.playerAccusations[cur]=accused;
+    if(accused===murderer){S.scores[cur]=(S.scores[cur]||0)+1;S.gameOver=true;showResult(true,accused,cur,[cur]);}
+    else{advanceTurn();}
+  }
+}
+function advanceTurn(){
+  let next=(S.currentTurnIndex+1)%S.players.length,attempts=0;
+  while(S.playerAccusations[S.players[next]]&&attempts<S.players.length){next=(next+1)%S.players.length;attempts++;}
+  if(attempts>=S.players.length){S.gameOver=true;showResult(false,null,null,[]);}
+  else{S.currentTurnIndex=next;updateTurnIndicator();renderAccusationBox();document.querySelectorAll('.suspect-card').forEach(c=>c.classList.remove('selected'));S.selectedSuspect=null;updateClueGate();}
+}
+
+async function showResult(correct,accused,winner,winners){
+  showScreen('result');document.getElementById('notes-toggle').style.display='none';closeNotes();
+  const s=S.scenario;
+  document.getElementById('result-card').className='result-card '+(correct?'correct-result':'wrong-result');
+  document.getElementById('result-verdict').textContent=correct?'Case Closed.':'The Killer Escapes.';
+  let mt;
+  if(correct){mt=winner?`${esc(winner)} has unmasked the killer: <em>${esc(s.murderer)}</em>`:`The investigators correctly identified <em>${esc(s.murderer)}</em>`;}
+  else{mt=`The real killer was <em>${esc(s.murderer)}</em> — who walks free tonight.`;}
+  document.getElementById('result-murderer').innerHTML=mt;
+  document.getElementById('result-motive').textContent=s.motive;
+  const maxScore=Math.max(...Object.values(S.scores));
+  document.getElementById('score-board').innerHTML=S.players.map(p=>{const sc=S.scores[p]||0;return`<div class="score-chip"><div class="score-name">${esc(p)}</div><div class="score-val ${sc===maxScore&&maxScore>0?'winner':''}">${sc} solved</div></div>`;}).join('');
+  // Update shared leaderboard
+  try{await fetch('/api/room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'leaderboard_update',players:S.players,winners:winners||[]})});}catch(e){}
+}
+
+// ===== LEADERBOARD =====
+async function showLeaderboard(ret){
+  lbReturn=ret;showScreen('leaderboard');
+  document.getElementById('lb-content').innerHTML='<div class="lb-empty">Loading…</div>';
+  try{
+    const r=await fetch('/api/room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'leaderboard_get'})});
+    if(r.ok){const lb=await r.json();renderLB(lb);}else{renderLB({});}
+  }catch(e){renderLB({});}
+}
+function renderLB(lb){
+  const el=document.getElementById('lb-content');
+  const entries=Object.entries(lb).map(([name,d])=>({name,...d,rate:d.played>0?Math.round((d.won/d.played)*100):0})).sort((a,b)=>b.won-a.won||b.rate-a.rate||b.bestStreak-a.bestStreak);
+  if(!entries.length){el.innerHTML='<div class="lb-empty">No cases solved yet.<br>Play your first mystery to begin.</div>';return;}
+  const rc=i=>i===0?'gold':i===1?'silver':i===2?'bronze':'';
+  el.innerHTML=`<table class="lb-table"><thead><tr><th></th><th>Detective</th><th>Won</th><th>Played</th><th>Rate</th><th>Streak</th><th>Best</th></tr></thead><tbody>${entries.map((e,i)=>`<tr><td class="lb-rank ${rc(i)}">${i+1}</td><td class="lb-name">${esc(e.name)}</td><td class="lb-wins">${e.won}</td><td class="lb-stat">${e.played}</td><td class="lb-stat">${e.rate}%</td><td class="lb-streak">${e.streak>0?'&#128293; '+e.streak:'—'}</td><td class="lb-stat">${e.bestStreak}</td></tr>`).join('')}</tbody></table>`;
+}
+async function confirmResetLB(){if(confirm('Clear the entire leaderboard? This cannot be undone.')){try{await fetch('/api/room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'leaderboard_reset'})});}catch(e){}renderLB({});}}
+
+// ===== NAV =====
+function showScreen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+n).classList.add('active');}
+function playAgain(){S.selectedSuspect=null;startGame(S.roomCode?'create':'solo');}
+function backToSetup(){showScreen('setup');document.getElementById('notes-toggle').style.display='none';closeNotes();}
+function toggleNotes(){document.getElementById('notes-panel').classList.toggle('open');}
+function closeNotes(){document.getElementById('notes-panel').classList.remove('open');}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+// ===== FALLBACK =====
+function getFallback(){return{title:"Death at the Conservatory Gala",setting:"A glittering botanical conservatory hosting a charity gala.",victim:"Lord Reginald Ashford, 67 — a wealthy industrialist.",discovery:"At 10:47 PM, guests found Lord Ashford slumped beside the orchid display. A faint smell of almonds hung in the air.",suspects:[{name:"Vivienne Drake",role:"The Niece",description:"Recently cut from Ashford's will."},{name:"Dr. Malcolm Cross",role:"The Physician",description:"Ashford's personal doctor."},{name:"Celeste Fontaine",role:"The Event Organiser",description:"Her catering firm faces ruin from Ashford's lawsuit."},{name:"Otto Brennan",role:"The Business Rival",description:"Lost a major contract and was heard making threats."},{name:"Iris Lam",role:"The Assistant",description:"Seen accessing Ashford's phone earlier."}],clues:["A vial of cyanide was found wrapped in a handkerchief bearing 'M.C.'","Vivienne and Ashford had an intense exchange at 9:15 PM.","Ashford's champagne came from a privately poured bottle.","Security footage shows a figure in the catering room at 9:50 PM.","Iris left the hall for 12 minutes between 9:30–9:42 PM.","A burned note read: '…he must not reach the board meeting. This ends tonight.'"],murderer:"Dr. Malcolm Cross",motive:"Ashford discovered Cross falsifying medical reports to embezzle from Ashford's health fund. Cross administered cyanide via a doctored champagne glass."};}
+</script>
+</body>
+</html>
