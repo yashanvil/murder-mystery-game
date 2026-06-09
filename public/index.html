@@ -212,12 +212,42 @@
       <div id="setup-error" class="error-msg" style="display:none"></div>
       <div class="center">
         <button class="btn btn-primary" onclick="startGame('solo')">Solo Device — Start</button>
+        <div class="or-divider">— or craft your own —</div>
+        <button class="btn btn-ghost" onclick="showCustomScenario()" style="width:100%">&#9997; Custom Scenario</button>
         <div class="or-divider">— or play remotely —</div>
         <div class="btn-row">
           <button class="btn btn-ghost" onclick="startGame('create')" style="flex:1">Create Room</button>
           <button class="btn btn-ghost" onclick="showJoin()" style="flex:1">Join Room</button>
         </div>
         <br><button class="btn-lb" onclick="showLeaderboard('setup')">&#127942; Hall of Detectives</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOM SCENARIO -->
+  <div id="screen-custom" class="screen">
+    <div class="setup-card">
+      <h2>&#9997; Craft Your Mystery</h2>
+      <p style="color:var(--muted);font-style:italic;margin-bottom:24px">Give Gemini a location and some names — it'll build the rest.</p>
+
+      <div class="section-header">Location <span style="color:var(--blood)">*</span></div>
+      <input id="custom-location" class="join-input" style="width:100%;font-size:1rem;letter-spacing:0;text-transform:none;padding:12px 14px" placeholder="e.g. a cruise ship in the Mediterranean…" maxlength="120"/>
+
+      <div class="section-header" style="margin-top:24px">Characters <span style="color:var(--muted);font-size:0.8rem;font-style:italic">(optional — at least one name to seed)</span></div>
+      <ul id="custom-char-list" style="list-style:none;padding:0;margin:0 0 10px"></ul>
+      <button class="add-player-btn" onclick="addCustomChar()">+ Add a character</button>
+
+      <div class="section-header" style="margin-top:24px">Theme / Twist <span style="color:var(--muted);font-size:0.8rem;font-style:italic">(optional)</span></div>
+      <input id="custom-twist" class="join-input" style="width:100%;font-size:1rem;letter-spacing:0;text-transform:none;padding:12px 14px" placeholder="e.g. set in the 1920s, everyone has a secret…" maxlength="120"/>
+
+      <div id="custom-error" class="error-msg" style="display:none;margin-top:16px"></div>
+      <div class="center" style="margin-top:24px">
+        <button class="btn btn-primary" onclick="startCustomGame('solo')">Solo Device — Start</button>
+        <div class="or-divider">— or play remotely —</div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="startCustomGame('create')" style="flex:1">Create Room</button>
+        </div>
+        <br><button class="btn btn-ghost" onclick="showScreen('screen-setup')" style="font-size:0.85rem;padding:8px 18px">← Back</button>
       </div>
     </div>
   </div>
@@ -386,6 +416,28 @@ async function startGame(type){
 
 // ===== JOIN =====
 function showJoin(){showScreen('join');document.getElementById('join-code-input').value='';document.getElementById('join-error').style.display='none';}
+function showCustomScenario(){showScreen('screen-custom');document.getElementById('custom-location').value='';document.getElementById('custom-twist').value='';document.getElementById('custom-char-list').innerHTML='';document.getElementById('custom-error').style.display='none';}
+function addCustomChar(){const ul=document.getElementById('custom-char-list');if(ul.children.length>=6)return;const li=document.createElement('li');li.style.cssText='display:flex;gap:8px;margin-bottom:8px';li.innerHTML=`<input class="join-input" placeholder="Name (e.g. Lord Henry)" style="flex:1;font-size:0.95rem;letter-spacing:0;text-transform:none;padding:10px 12px" maxlength="40"/><input class="join-input" placeholder="Role (optional)" style="flex:1;font-size:0.95rem;letter-spacing:0;text-transform:none;padding:10px 12px" maxlength="60"/><button class="remove-player" onclick="this.parentElement.remove()" title="Remove" style="padding:0 10px">×</button>`;ul.appendChild(li);}
+async function startCustomGame(type){
+  const location=document.getElementById('custom-location').value.trim();
+  const err=document.getElementById('custom-error');
+  err.style.display='none';
+  if(!location){err.style.display='block';err.textContent='Please enter a location.';return;}
+  const chars=[...document.getElementById('custom-char-list').children].map(li=>{const inputs=li.querySelectorAll('input');return{name:inputs[0].value.trim(),role:inputs[1].value.trim()};}).filter(c=>c.name);
+  const twist=document.getElementById('custom-twist').value.trim();
+  const players=[...document.querySelectorAll('#player-list .player-input')].map(i=>i.value.trim()).filter(Boolean);
+  showLoading();
+  try{
+    const r=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:S.mode,difficulty:S.difficulty,customLocation:location,customCharacters:chars,customTwist:twist})});
+    if(!r.ok){hideLoading();err.style.display='block';err.textContent='Failed to generate scenario. Try again.';showScreen('screen-custom');return;}
+    S.scenario=await r.json();S.players=players;S.difficulty=S.difficulty||'afoot';
+    if(type==='create'){
+      try{const rr=await fetch('/api/room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'create',scenario:S.scenario,difficulty:S.difficulty,mode:S.mode})});
+      if(rr.ok){const d=await rr.json();S.roomCode=d.code;document.getElementById('room-code-display').textContent=d.code;hideLoading();showScreen('room');return;}}catch(e){}
+    }
+    hideLoading();enterGame();
+  }catch(e){hideLoading();err.style.display='block';err.textContent='Connection error. Try again.';showScreen('screen-custom');}
+}
 async function joinRoom(){
   const code=document.getElementById('join-code-input').value.trim().toUpperCase();
   const err=document.getElementById('join-error');

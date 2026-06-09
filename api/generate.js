@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY not configured" });
 
-  const { mode, difficulty } = req.body || {};
+  const { mode, difficulty, customLocation, customCharacters, customTwist } = req.body || {};
 
   const modes = {
     cooperative: "Players work together to solve the mystery.",
@@ -29,7 +29,20 @@ export default async function handler(req, res) {
 
   const diff = diffSettings[difficulty] || diffSettings.afoot;
 
-  const prompt = `Generate a unique murder mystery scenario for a party game. Return ONLY valid JSON — no markdown fences, no preamble, no explanation.
+  // Build custom seeding instructions if provided
+  const customSeedLines = [];
+  if (customLocation) customSeedLines.push(`- Setting MUST be: ${customLocation}`);
+  if (customCharacters && customCharacters.length > 0) {
+    const charList = customCharacters.map(c => c.role ? `${c.name} (${c.role})` : c.name).join(", ");
+    customSeedLines.push(`- Seed these real characters into your suspects list (you may add more to reach the required count): ${charList}`);
+    customSeedLines.push(`- Keep their names exactly as given. Invent their descriptions, backstories and motives.`);
+  }
+  if (customTwist) customSeedLines.push(`- Incorporate this theme or twist: ${customTwist}`);
+  const customBlock = customSeedLines.length > 0
+    ? `\nCustom requirements (MUST follow):\n${customSeedLines.join("\n")}\n`
+    : "";
+
+  const prompt = `Generate a unique murder mystery scenario for a party game. Return ONLY valid JSON — no markdown fences, no preamble, no explanation.${customBlock}
 
 Schema:
 {
@@ -50,7 +63,7 @@ Schema:
 Rules:
 - Exactly ${diff.suspects} suspects, exactly ${diff.clues} clues
 - ${diff.guidance}
-- Setting should be unusual, vivid, and interesting — avoid cliches like an English manor or a dinner party
+- ${customLocation ? "Use the provided setting exactly as specified" : "Setting should be unusual, vivid, and interesting — avoid cliches like an English manor or a dinner party"}
 - Make it fun, dramatic, and slightly theatrical — channel the atmosphere of a Sherlock Holmes mystery
 - Game mode: ${modes[mode] || modes.cooperative}`;
 
