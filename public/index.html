@@ -398,9 +398,9 @@ async function startGame(type){
   showLoading();
   try{
     const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:S.mode,difficulty:S.difficulty})});
-    if(!res.ok)throw new Error('API error');
+    if(!res.ok){const errData=await res.json().catch(()=>({}));hideLoading();err.style.display='block';err.textContent='Failed to generate scenario: '+(errData.error||res.status)+'. Check your API key in Vercel.';return;}
     S.scenario=await res.json();
-  }catch(e){S.scenario=getFallback();}
+  }catch(e){hideLoading();err.style.display='block';err.textContent='Could not reach the AI. Check your internet or Vercel function logs.';return;}
   hideLoading();
 
   if(type==='create'){
