@@ -383,7 +383,7 @@ function getPlayerNames(){return Array.from(document.querySelectorAll('.player-i
 const loadPhrases=['The detective arrives at the scene…','A body has been discovered…','Interviewing witnesses…','Dusting for fingerprints…','The game is afoot…'];
 let loadInt;
 function showLoading(){showScreen('loading');let i=0;const el=document.getElementById('loading-text');el.textContent=loadPhrases[0];loadInt=setInterval(()=>{i=(i+1)%loadPhrases.length;el.textContent=loadPhrases[i];},1800);}
-function hideLoading(){clearInterval(loadInt);}
+function hideLoading(returnScreen){clearInterval(loadInt);if(returnScreen)showScreen(returnScreen);}
 
 // ===== START GAME =====
 async function startGame(type){
@@ -398,9 +398,9 @@ async function startGame(type){
   showLoading();
   try{
     const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:S.mode,difficulty:S.difficulty})});
-    if(!res.ok){const errData=await res.json().catch(()=>({}));hideLoading();err.style.display='block';err.textContent='Failed to generate scenario: '+(errData.error||res.status)+'. Check your API key in Vercel.';return;}
+    if(!res.ok){const errData=await res.json().catch(()=>({}));hideLoading('setup');err.style.display='block';err.textContent='Failed to generate scenario: '+(errData.error||res.status)+'. Check your API key in Vercel.';return;}
     S.scenario=await res.json();
-  }catch(e){hideLoading();err.style.display='block';err.textContent='Could not reach the AI. Check your internet or Vercel function logs.';return;}
+  }catch(e){hideLoading('setup');err.style.display='block';err.textContent='Could not reach the AI. Check your internet or Vercel function logs.';return;}
   hideLoading();
 
   if(type==='create'){
@@ -445,7 +445,7 @@ async function joinRoom(){
   err.style.display='none';showLoading();
   try{
     const r=await fetch('/api/room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'join',code})});
-    if(!r.ok){hideLoading();err.style.display='block';err.textContent='Room not found. Check the code and try again.';showScreen('join');return;}
+    if(!r.ok){hideLoading('join');err.style.display='block';err.textContent='Room not found. Check the code and try again.';return;}
     const d=await r.json();S.scenario=d.scenario;S.difficulty=d.difficulty||'afoot';S.mode=d.mode||'cooperative';S.roomCode=code;
     // Get player names from setup
     const names=getPlayerNames();
