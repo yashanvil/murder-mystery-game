@@ -57,6 +57,26 @@ export default async function handler(req, res) {
       return res.status(200).json({ code });
     }
 
+    // ===== REFRESH ROOM CODE =====
+    if (action === "refresh") {
+      const { scenario, difficulty, mode } = req.body;
+      if (!scenario) return res.status(400).json({ error: "No scenario" });
+
+      let code;
+      for (let i = 0; i < 5; i++) {
+        code = generateCode();
+        const existing = await supabase(`rooms?code=eq.${code}&select=code`);
+        if (!existing || existing.length === 0) break;
+      }
+
+      await supabase("rooms", {
+        method: "POST",
+        body: { code, scenario, difficulty, mode, created_at: new Date().toISOString() },
+      });
+
+      return res.status(200).json({ code });
+    }
+
     // ===== JOIN ROOM =====
     if (action === "join") {
       const { code } = req.body;

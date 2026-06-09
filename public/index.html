@@ -245,7 +245,11 @@
         <div class="code" id="room-code-display"></div>
         <p>They tap <strong>Join Room</strong> and enter this code</p>
       </div>
-      <div style="margin-top:24px"><button class="btn btn-primary" onclick="enterGameFromRoom()">Enter the Crime Scene</button></div>
+      <div style="margin-top:12px">
+        <button class="btn btn-ghost" id="refresh-code-btn" onclick="refreshRoomCode()" style="font-size:0.85rem;padding:8px 18px">↻ Refresh Code</button>
+        <p id="refresh-code-msg" style="color:var(--muted);font-size:0.8rem;font-style:italic;margin-top:6px;display:none">Code updated — share the new one!</p>
+      </div>
+      <div style="margin-top:16px"><button class="btn btn-primary" onclick="enterGameFromRoom()">Enter the Crime Scene</button></div>
     </div>
   </div>
 
@@ -400,6 +404,16 @@ async function joinRoom(){
   hideLoading();enterGame();
 }
 function enterGameFromRoom(){enterGame();}
+async function refreshRoomCode(){
+  const btn=document.getElementById('refresh-code-btn');
+  const msg=document.getElementById('refresh-code-msg');
+  btn.disabled=true;btn.textContent='Refreshing…';
+  try{
+    const r=await fetch('/api/room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'refresh',scenario:S.scenario,difficulty:S.difficulty,mode:S.mode})});
+    if(r.ok){const d=await r.json();S.roomCode=d.code;document.getElementById('room-code-display').textContent=d.code;msg.style.display='block';setTimeout(()=>msg.style.display='none',3000);}
+  }catch(e){console.error('Refresh failed',e);}
+  btn.disabled=false;btn.textContent='↻ Refresh Code';
+}
 
 function enterGame(){
   if(S.mode==='deceptive'&&S.players.length>1){
