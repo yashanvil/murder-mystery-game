@@ -91,7 +91,14 @@ Rules:
     }
 
     const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    // Gemini 2.5 Flash may have "thinking" parts before the text part — find the last text part
+    const parts = data?.candidates?.[0]?.content?.parts || [];
+    const textPart = parts.filter(p => p.text && !p.thought).pop() || parts.pop() || {};
+    const text = textPart.text || "";
+    if (!text) {
+      console.error("No text in Gemini response:", JSON.stringify(data).slice(0, 500));
+      return res.status(502).json({ error: "AI returned empty response" });
+    }
     const clean = text.replace(/```json|```/g, "").trim();
     const scenario = JSON.parse(clean);
 
@@ -101,7 +108,7 @@ Rules:
 
     return res.status(200).json(scenario);
   } catch (err) {
-    console.error("Generate error:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error("Generate error:", err.message, err.stack?.slice(0, 200));
+    return res.status(500).json({ error: err.message || "Internal server error" });
   }
 }
