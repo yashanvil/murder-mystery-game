@@ -178,7 +178,8 @@
 </head>
 <body>
 <div id="app">
-  <div class="masthead">
+  <div class="masthead" style="position:relative">
+    <button id="home-btn" onclick="goHome()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:1px solid rgba(201,168,76,.3);color:var(--gold);cursor:pointer;font-size:.85rem;padding:6px 14px;font-family:'Crimson Text',serif;display:none;transition:all .2s" onmouseover="this.style.borderColor='var(--gold)';this.style.background='rgba(201,168,76,.08)'" onmouseout="this.style.borderColor='rgba(201,168,76,.3)';this.style.background='none'">← Home</button>
     <div class="game-title"><span class="dagger">✦</span> Murder at Midnight <span class="dagger">✦</span></div>
     <div class="game-subtitle">A Mystery of Deduction &amp; Deception</div>
   </div>
@@ -582,7 +583,8 @@ function renderLB(lb){
 async function confirmResetLB(){if(confirm('Clear the entire leaderboard? This cannot be undone.')){try{await fetch('/api/room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'leaderboard_reset'})});}catch(e){}renderLB({});}}
 
 // ===== NAV =====
-function showScreen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+n).classList.add('active');}
+function showScreen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+n).classList.add('active');const hb=document.getElementById('home-btn');if(hb)hb.style.display=(n==='setup')?'none':'block';}
+function goHome(){clearInterval(loadInt);showScreen('setup');}
 function playAgain(){S.selectedSuspect=null;startGame(S.roomCode?'create':'solo');}
 function backToSetup(){showScreen('setup');document.getElementById('notes-toggle').style.display='none';closeNotes();}
 function toggleNotes(){document.getElementById('notes-panel').classList.toggle('open');}
