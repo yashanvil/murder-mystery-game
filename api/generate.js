@@ -69,7 +69,7 @@ Rules:
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,8 +77,7 @@ Rules:
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 1.0,
-            maxOutputTokens: 1500,
-            responseMimeType: "application/json",
+            maxOutputTokens: 2000,
           },
         }),
       }
