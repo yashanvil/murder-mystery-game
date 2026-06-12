@@ -259,6 +259,10 @@
       <h2>Enter the Case File Code</h2>
       <p style="color:var(--muted);font-style:italic;margin-bottom:24px">Get the 4-letter code from whoever created the game</p>
       <input class="join-input" id="join-code-input" maxlength="4" placeholder="CODE" autocomplete="off"/>
+      <div style="margin-top:20px">
+        <div class="section-header">Your Name</div>
+        <input class="join-input" id="join-name-input" placeholder="Detective name…" autocomplete="off" style="width:100%;font-size:1rem;letter-spacing:0;text-transform:none;padding:12px 14px"/>
+      </div>
       <div id="join-error" class="error-msg" style="display:none"></div>
       <div style="margin-top:24px">
         <button class="btn btn-primary" onclick="joinRoom()">Open the Case</button>
@@ -448,10 +452,9 @@ async function joinRoom(){
     const r=await fetch('/api/room',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'join',code})});
     if(!r.ok){hideLoading('join');err.style.display='block';err.textContent='Room not found. Check the code and try again.';return;}
     const d=await r.json();S.scenario=d.scenario;S.difficulty=d.difficulty||'afoot';S.mode=d.mode||'cooperative';S.roomCode=code;
-    // Get player names from setup
-    const names=getPlayerNames();
-    if(names.length<1){hideLoading();showScreen('setup');return;}
-    S.players=names;names.forEach(n=>{if(S.scores[n]===undefined)S.scores[n]=0;});
+    const joinName=document.getElementById('join-name-input').value.trim();
+    if(!joinName){hideLoading('join');err.style.display='block';err.textContent='Enter your name.';return;}
+    S.players=[joinName];S.scores[joinName]=S.scores[joinName]||0;
     S.playerAccusations={};S.currentTurnIndex=0;S.gameOver=false;S.selectedSuspect=null;S.revealedClues=[0];
   }catch(e){hideLoading();err.style.display='block';err.textContent='Connection error. Try again.';showScreen('join');return;}
   hideLoading();enterGame();
